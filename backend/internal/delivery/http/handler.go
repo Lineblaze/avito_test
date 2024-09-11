@@ -1,0 +1,209 @@
+package http
+
+import (
+	openapi "github.com/Lineblaze/avito_gen"
+	"github.com/gofiber/fiber/v3"
+	useCase "zadanie-6105/backend/internal"
+	"zadanie-6105/backend/internal/domain"
+	"zadanie-6105/backend/pkg/logger"
+)
+
+//go:generate ifacemaker -f handler.go -o ../../handler.go -i Handler -s Handler -p internal -y "Controller describes methods, implemented by the http package."
+type Handler struct {
+	useCase useCase.UseCase
+	logger  *logger.ApiLogger
+}
+
+func NewHandler(useCase useCase.UseCase, logger *logger.ApiLogger) *Handler {
+	return &Handler{useCase: useCase, logger: logger}
+}
+
+// Ping
+
+func (h Handler) Ping() fiber.Handler {
+	return func(c fiber.Ctx) error {
+		return c.Status(fiber.StatusOK).SendString("ok")
+	}
+}
+
+// Employees
+
+func (h Handler) CreateEmployee() fiber.Handler {
+	return func(c fiber.Ctx) error {
+		var req domain.CreateEmployeeRequest
+		if err := c.Bind().Body(&req); err != nil {
+			h.logger.Errorf("Failed to parse request body", err)
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
+		}
+
+		employee, err := h.useCase.CreateEmployee(&req)
+		if err != nil {
+			h.logger.Errorf("Failed to create employee", err)
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "InternalServerError"})
+		}
+
+		return c.Status(fiber.StatusOK).JSON(employee)
+	}
+}
+
+// Organizations
+
+func (h Handler) CreateOrganization() fiber.Handler {
+	return func(c fiber.Ctx) error {
+		var req domain.CreateOrganizationRequest
+		if err := c.Bind().Body(&req); err != nil {
+			h.logger.Errorf("Failed to parse request body", err)
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
+		}
+
+		organization, err := h.useCase.CreateOrganization(&req)
+		if err != nil {
+			h.logger.Errorf("Failed to create flat", err)
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "InternalServerError"})
+		}
+
+		return c.Status(fiber.StatusOK).JSON(organization)
+	}
+}
+
+func (h Handler) AssignEmployeeToOrganization() fiber.Handler {
+	return func(c fiber.Ctx) error {
+		var req domain.AssignEmployeeToOrganizationRequest
+
+		if err := c.Bind().Body(&req); err != nil {
+			h.logger.Errorf("Failed to parse request body: %v", err)
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
+		}
+
+		orgResp, err := h.useCase.AssignEmployeeToOrganization(&req)
+		if err != nil {
+			h.logger.Errorf("Failed to assign employee to organization: %v", err)
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Internal Server Error"})
+		}
+
+		return c.Status(fiber.StatusOK).JSON(orgResp)
+	}
+}
+
+// Tenders
+
+func (h Handler) GetTenders() fiber.Handler {
+	return func(c fiber.Ctx) error {
+		tenders, err := h.useCase.GetTenders()
+		if err != nil {
+			h.logger.Errorf("Failed to get tenders", err)
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "InternalServerError"})
+		}
+
+		return c.Status(fiber.StatusOK).JSON(tenders)
+	}
+}
+
+func (h *Handler) GetUserTenders() fiber.Handler {
+	return func(c fiber.Ctx) error {
+		username := c.Query("username")
+		if username == "" {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "username is required"})
+		}
+		tenders, err := h.useCase.GetUserTenders(username)
+		if err != nil {
+			h.logger.Errorf("Failed to fetch tenders", err)
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "InternalServerError"})
+		}
+
+		return c.Status(fiber.StatusOK).JSON(tenders)
+	}
+}
+
+func (h *Handler) GetTenderStatus() fiber.Handler {
+	return func(c fiber.Ctx) error {
+		tenderID := c.Params("tenderId")
+
+		status, err := h.useCase.GetTenderStatus(tenderID)
+		if err != nil {
+			h.logger.Errorf("Failed to get tender status: %v", err)
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Internal Server Error"})
+		}
+
+		return c.Status(fiber.StatusOK).JSON(fiber.Map{"status": status})
+	}
+}
+
+func (h Handler) CreateTender() fiber.Handler {
+	return func(c fiber.Ctx) error {
+		var req openapi.CreateTenderRequest
+		if err := c.Bind().Body(&req); err != nil {
+			h.logger.Errorf("Failed to parse request body", err)
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
+		}
+
+		isResponsible, err := h.useCase.CheckUserOrganizationResponsibility(req.OrganizationId)
+		if err != nil {
+			h.logger.Errorf("Failed to check user responsibility", err)
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "InternalServerError"})
+		}
+
+		if !isResponsible {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "User not responsible for this organization"})
+		}
+
+		tender, err := h.useCase.CreateTender(&req)
+		if err != nil {
+			h.logger.Errorf("Failed to create tender", err)
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "InternalServerError"})
+		}
+
+		return c.Status(fiber.StatusOK).JSON(tender)
+	}
+}
+
+func (h *Handler) EditTender() fiber.Handler {
+	return func(c fiber.Ctx) error {
+		tenderID := c.Params("tenderId")
+		var req openapi.EditTenderRequest
+		if err := c.Bind().Body(&req); err != nil {
+			h.logger.Errorf("Failed to parse request body", err)
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
+		}
+
+		updatedTender, err := h.useCase.EditTender(tenderID, &req)
+		if err != nil {
+			h.logger.Errorf("Failed to update tender", err)
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "InternalServerError"})
+		}
+
+		return c.Status(fiber.StatusOK).JSON(updatedTender)
+	}
+}
+
+func (h *Handler) UpdateTenderStatus() fiber.Handler {
+	return func(c fiber.Ctx) error {
+		tenderID := c.Params("tenderId")
+		status := c.Params("status")
+
+		err := h.useCase.UpdateTenderStatus(tenderID, status)
+		if err != nil {
+			h.logger.Errorf("Failed to update tender status", err)
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Internal Server Error"})
+		}
+
+		return c.SendStatus(fiber.StatusOK)
+	}
+}
+
+func (h *Handler) RollbackTender() fiber.Handler {
+	return func(c fiber.Ctx) error {
+		tenderID := c.Params("tenderId")
+		version := c.Params("version")
+
+		rolledBackTender, err := h.useCase.RollbackTender(tenderID, version)
+		if err != nil {
+			h.logger.Errorf("Failed to rollback tender", err)
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "InternalServerError"})
+		}
+
+		return c.Status(fiber.StatusOK).JSON(rolledBackTender)
+	}
+}
+
+// Bids
