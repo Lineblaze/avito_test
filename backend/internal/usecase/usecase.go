@@ -90,6 +90,10 @@ func (u *UseCase) CheckUserOrganizationResponsibility(organizationId string) (bo
 	return u.repo.IsUserResponsibleForOrganization(organizationId)
 }
 
+func (u *UseCase) CheckUserOrganizationResponsibilityByUsername(username string) (bool, error) {
+	return u.repo.IsUserResponsibleForOrganizationByUsername(username)
+}
+
 // Tenders
 
 func (u *UseCase) GetTenders() ([]openapi.Tender, error) {
@@ -315,4 +319,36 @@ func (u *UseCase) RollbackBid(bidID string, version string) (*openapi.Bid, error
 	}
 
 	return updatedBid, nil
+}
+
+func (u *UseCase) SubmitBidDecision(bidId string, decision string, username string) error {
+	err := u.repo.UpdateBidDecision(bidId, decision, username)
+	if err != nil {
+		return fmt.Errorf("error updating bid decision for bid %s: %w", bidId, err)
+	}
+
+	if decision == "Approved" {
+		err = u.repo.CloseTenderByBid(bidId)
+		if err != nil {
+			return fmt.Errorf("error closing tender after bid approval for bid %s: %w", bidId, err)
+		}
+	}
+
+	return nil
+}
+
+func (u *UseCase) SubmitBidFeedback(bidId string, feedback string, username string) error {
+	err := u.repo.UpdateBidFeedback(bidId, feedback, username)
+	if err != nil {
+		return fmt.Errorf("error updating feedback for bid %s: %w", bidId, err)
+	}
+	return nil
+}
+
+func (u *UseCase) GetBidReviewsByTenderId(tenderId string) ([]openapi.BidReview, error) {
+	reviews, err := u.repo.GetBidReviewsByTenderId(tenderId)
+	if err != nil {
+		return nil, fmt.Errorf("error fetching reviews for tender %s: %w", tenderId, err)
+	}
+	return reviews, nil
 }

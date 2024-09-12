@@ -17,6 +17,7 @@ type UseCase interface {
 	CreateOrganization(req *domain.CreateOrganizationRequest) (*domain.Organization, error)
 	AssignEmployeeToOrganization(req *domain.AssignEmployeeToOrganizationRequest) (*domain.OrganizationResponsible, error)
 	CheckUserOrganizationResponsibility(organizationId string) (bool, error)
+	CheckUserOrganizationResponsibilityByUsername(username string) (bool, error)
 	GetTenders() ([]openapi.Tender, error)
 	GetTenderByID(tenderID string) (*openapi.Tender, error)
 	GetUserTenders(userName string) ([]*openapi.Tender, error)
@@ -34,4 +35,7 @@ type UseCase interface {
 	EditBid(bidID string, req *openapi.EditBidRequest) (*openapi.Bid, error)
 	UpdateBidStatus(bidID string, status string) error
 	RollbackBid(bidID string, version string) (*openapi.Bid, error)
+	SubmitBidDecision(bidId string, decision string, username string) error
+	SubmitBidFeedback(bidId string, feedback string, username string) error
+	GetBidReviewsByTenderId(tenderId string) ([]openapi.BidReview, error)
 }

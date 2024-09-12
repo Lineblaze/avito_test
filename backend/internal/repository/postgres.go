@@ -190,6 +190,22 @@ func (p *PostgresRepository) IsUserResponsibleForOrganization(organizationId str
 	return count > 0, nil
 }
 
+func (p *PostgresRepository) IsUserResponsibleForOrganizationByUsername(username string) (bool, error) {
+	var count int
+	err := p.db.QueryRow(`
+		SELECT COUNT(1)
+		FROM organization_responsible org
+		JOIN employee e ON org.user_id = e.id
+		WHERE e.username = $1 
+	`, username).Scan(&count)
+
+	if err != nil {
+		return false, fmt.Errorf("failed to check user responsibility: %w", err)
+	}
+
+	return count > 0, nil
+}
+
 // Tenders
 
 func (p *PostgresRepository) GetTenderByID(tenderId string) (*openapi.Tender, error) {
@@ -621,7 +637,7 @@ func (p *PostgresRepository) CreateBid(bid *openapi.Bid) (*openapi.Bid, error) {
 func (p *PostgresRepository) EditBid(bid *openapi.Bid) (*openapi.Bid, error) {
 	_, err := p.db.Exec(`
 		INSERT INTO bid_version (id, bid_id, name, description, status, tender_id, author_type, author_id, version, created_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW())`,
 		uuid.New(), bid.Id, bid.Name, bid.Description, bid.Status, bid.TenderId, bid.AuthorType, bid.AuthorId, bid.Version, bid.CreatedAt,
 	)
 	if err != nil {
@@ -666,4 +682,76 @@ func (p *PostgresRepository) UpdateBidStatus(bidID string, status string) error 
 		return fmt.Errorf("failed to update bid status: %w", err)
 	}
 	return nil
+}
+
+func (p *PostgresRepository) UpdateBidDecision(bidId string, decision string, username string) error {
+	_, err := p.db.Exec(`
+		INSERT INTO bid_decision (bid_id, decision, username)
+		VALUES ($1, $2, $3)
+		ON CONFLICT (bid_id, username) DO UPDATE 
+		SET decision = EXCLUDED.decision`,
+		bidId, decision, username,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to insert or update bid decision for bid %s by user %s: %w", bidId, username, err)
+	}
+
+	return nil
+}
+
+func (p *PostgresRepository) CloseTenderByBid(bidId string) error {
+	_, err := p.db.Exec(`
+		UPDATE tender SET status = 'Closed'
+		WHERE id = (SELECT tender_id FROM bid WHERE id = $1)`,
+		bidId,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to close tender: %w", err)
+	}
+
+	return nil
+}
+
+func (p *PostgresRepository) UpdateBidFeedback(bidId string, feedback string, username string) error {
+	_, err := p.db.Exec(`
+		INSERT INTO bid_feedback (bid_id, feedback, username, created_at)
+		VALUES ($1, $2, $3, NOW())
+		ON CONFLICT (bid_id, username) DO UPDATE 
+		SET feedback = EXCLUDED.feedback`,
+		bidId, feedback, username,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to insert or update bid feedback for bid %s by user %s: %w", bidId, username, err)
+	}
+
+	return nil
+}
+
+func (p *PostgresRepository) GetBidReviewsByTenderId(tenderId string) ([]openapi.BidReview, error) {
+	rows, err := p.db.Query(`
+        SELECT t.id, bf.feedback, bf.created_at
+        FROM bid_feedback bf
+        JOIN bid b ON bf.bid_id = b.id
+        JOIN tender t ON b.tender_id = t.id
+        WHERE t.id = $1
+    `, tenderId)
+	if err != nil {
+		return nil, fmt.Errorf("error fetching bid reviews for tender %s: %w", tenderId, err)
+	}
+	defer rows.Close()
+
+	var reviews []openapi.BidReview
+
+	for rows.Next() {
+		var review openapi.BidReview
+		var createdAt time.Time
+		err = rows.Scan(&review.Id, &review.Description, &createdAt)
+		if err != nil {
+			return nil, fmt.Errorf("error scanning bid reviews: %w", err)
+		}
+		review.CreatedAt = createdAt.Format(time.RFC3339)
+		reviews = append(reviews, review)
+	}
+
+	return reviews, nil
 }

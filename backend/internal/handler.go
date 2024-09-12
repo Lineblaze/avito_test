@@ -26,4 +26,7 @@ type Handler interface {
 	EditBid() fiber.Handler
 	UpdateBidStatus() fiber.Handler
 	RollbackBid() fiber.Handler
+	SubmitBidDecision() fiber.Handler
+	SubmitBidFeedback() fiber.Handler
+	GetBidReviews() fiber.Handler
 }

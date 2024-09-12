@@ -341,3 +341,91 @@ func (h *Handler) RollbackBid() fiber.Handler {
 		return c.Status(fiber.StatusOK).JSON(rolledBackBid)
 	}
 }
+
+func (h Handler) SubmitBidDecision() fiber.Handler {
+	return func(c fiber.Ctx) error {
+		bidId := c.Params("bidId")
+		decision := c.Params("decision")
+		username := c.Params("username")
+
+		if decision != "Approved" && decision != "Rejected" {
+			h.logger.Errorf("Invalid decision")
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid decision"})
+		}
+
+		isResponsible, err := h.useCase.CheckUserOrganizationResponsibilityByUsername(username)
+		if err != nil {
+			h.logger.Errorf("Failed to check user responsibility", err)
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "InternalServerError"})
+		}
+
+		if !isResponsible {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "User not responsible for this organization"})
+		}
+
+		err = h.useCase.SubmitBidDecision(bidId, decision, username)
+		if err != nil {
+			h.logger.Errorf("Failed to submit bid decision", err)
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "InternalServerError"})
+		}
+
+		return c.Status(fiber.StatusOK).JSON(fiber.Map{"message": "Bid decision submitted successfully"})
+	}
+}
+
+func (h Handler) SubmitBidFeedback() fiber.Handler {
+	return func(c fiber.Ctx) error {
+		bidId := c.Params("bidId")
+		feedback := c.Params("feedback")
+		username := c.Params("username")
+
+		if len(feedback) > 1000 {
+			h.logger.Errorf("Feedback is too long")
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Feedback exceeds character limit"})
+		}
+
+		isResponsible, err := h.useCase.CheckUserOrganizationResponsibilityByUsername(username)
+		if err != nil {
+			h.logger.Errorf("Failed to check user responsibility", err)
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "InternalServerError"})
+		}
+
+		if !isResponsible {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "User not responsible for this organization"})
+		}
+
+		err = h.useCase.SubmitBidFeedback(bidId, feedback, username)
+		if err != nil {
+			h.logger.Errorf("Failed to submit bid feedback", err)
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "InternalServerError"})
+		}
+
+		return c.Status(fiber.StatusOK).JSON(fiber.Map{"message": "Feedback submitted successfully"})
+	}
+}
+
+func (h Handler) GetBidReviews() fiber.Handler {
+	return func(c fiber.Ctx) error {
+		tenderId := c.Params("tenderId")
+		username := c.Params("username")
+
+		isResponsible, err := h.useCase.CheckUserOrganizationResponsibilityByUsername(username)
+		if err != nil {
+			h.logger.Errorf("Failed to check user responsibility: %v", err)
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "InternalServerError"})
+		}
+
+		if !isResponsible {
+			h.logger.Warnf("User %s is not responsible for tender %s", username, tenderId)
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "User not responsible for this organization"})
+		}
+
+		reviews, err := h.useCase.GetBidReviewsByTenderId(tenderId)
+		if err != nil {
+			h.logger.Errorf("Failed to get bid reviews: %v", err)
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "InternalServerError"})
+		}
+
+		return c.Status(fiber.StatusOK).JSON(reviews)
+	}
+}

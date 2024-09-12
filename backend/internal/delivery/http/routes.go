@@ -27,4 +27,8 @@ func MapRoutes(r fiber.Router, h handler.Handler) {
 	r.Patch(`/bids/:bidId/edit`, h.EditBid())
 	r.Put(`/bids/:bidId/rollback/:version`, h.RollbackBid())
 	r.Put("/bids/:bidId/status/:status", h.UpdateBidStatus())
+
+	r.Get("/bids/:tenderId/reviews/:username", h.GetBidReviews())
+	r.Put("/bids/:bidId/submit_decision/:decision/:username", h.SubmitBidDecision())
+	r.Put("/bids/:bidId/feedback/:feedback/:username", h.SubmitBidFeedback())
 }

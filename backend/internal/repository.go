@@ -17,6 +17,7 @@ type Repository interface {
 	CreateOrganization(organization *domain.Organization) (*domain.Organization, error)
 	AssignEmployeeToOrganization(orgResp *domain.OrganizationResponsible) (*domain.OrganizationResponsible, error)
 	IsUserResponsibleForOrganization(organizationId string) (bool, error)
+	IsUserResponsibleForOrganizationByUsername(username string) (bool, error)
 	GetTenderByID(tenderId string) (*openapi.Tender, error)
 	GetTenders() ([]openapi.Tender, error)
 	GetUserTenders(userName string) ([]*openapi.Tender, error)
@@ -34,4 +35,8 @@ type Repository interface {
 	CreateBid(bid *openapi.Bid) (*openapi.Bid, error)
 	EditBid(bid *openapi.Bid) (*openapi.Bid, error)
 	UpdateBidStatus(bidID string, status string) error
+	UpdateBidDecision(bidId string, decision string, username string) error
+	CloseTenderByBid(bidId string) error
+	UpdateBidFeedback(bidId string, feedback string, username string) error
+	GetBidReviewsByTenderId(tenderId string) ([]openapi.BidReview, error)
 }
