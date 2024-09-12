@@ -19,4 +19,12 @@ func MapRoutes(r fiber.Router, h handler.Handler) {
 	r.Patch(`/tenders/:tenderId/edit`, h.EditTender())
 	r.Put(`/tenders/:tenderId/rollback/:version`, h.RollbackTender())
 	r.Put("/tenders/:tenderId/status/:status", h.UpdateTenderStatus())
+
+	r.Get(`/bids/my`, h.GetUserBids())
+	r.Get(`/bids/:tenderId/list`, h.GetBidsByTenderID())
+	r.Get("/bids/:bidId/status", h.GetBidStatus())
+	r.Post(`/bids/new`, h.CreateBid())
+	r.Patch(`/bids/:bidId/edit`, h.EditBid())
+	r.Put(`/bids/:bidId/rollback/:version`, h.RollbackBid())
+	r.Put("/bids/:bidId/status/:status", h.UpdateBidStatus())
 }

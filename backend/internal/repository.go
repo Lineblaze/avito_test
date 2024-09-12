@@ -25,4 +25,13 @@ type Repository interface {
 	CreateTender(tender *openapi.Tender) (*openapi.Tender, error)
 	EditTender(tender *openapi.Tender) (*openapi.Tender, error)
 	UpdateTenderStatus(tenderID string, status string) error
+	GetBidByID(bidId string) (*openapi.Bid, error)
+	BidExistsByTenderID(tenderId string) (bool, error)
+	GetBidsByTenderID(tenderId string) ([]*openapi.Bid, error)
+	GetUserBids(userName string) ([]*openapi.Bid, error)
+	GetBidByVersion(bidID string, version string) (*openapi.Bid, error)
+	GetBidStatus(bidID string) (string, error)
+	CreateBid(bid *openapi.Bid) (*openapi.Bid, error)
+	EditBid(bid *openapi.Bid) (*openapi.Bid, error)
+	UpdateBidStatus(bidID string, status string) error
 }

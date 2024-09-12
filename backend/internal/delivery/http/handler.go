@@ -207,3 +207,137 @@ func (h *Handler) RollbackTender() fiber.Handler {
 }
 
 // Bids
+
+func (h *Handler) GetUserBids() fiber.Handler {
+	return func(c fiber.Ctx) error {
+		username := c.Query("username")
+		if username == "" {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "username is required"})
+		}
+		bids, err := h.useCase.GetUserBids(username)
+		if err != nil {
+			h.logger.Errorf("Failed to fetch tenders", err)
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "InternalServerError"})
+		}
+
+		return c.Status(fiber.StatusOK).JSON(bids)
+	}
+}
+
+func (h *Handler) GetBidsByTenderID() fiber.Handler {
+	return func(c fiber.Ctx) error {
+		tenderID := c.Params("tenderId")
+		if tenderID == "" {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "tenderId is required"})
+		}
+
+		bids, err := h.useCase.GetBidsByTenderID(tenderID)
+		if err != nil {
+			h.logger.Errorf("Failed to get bids by tender ID: %v", err)
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Internal Server Error"})
+		}
+
+		return c.Status(fiber.StatusOK).JSON(bids)
+	}
+}
+
+func (h *Handler) GetBidStatus() fiber.Handler {
+	return func(c fiber.Ctx) error {
+		bidID := c.Params("bidId")
+		if bidID == "" {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "bidId is required"})
+		}
+
+		status, err := h.useCase.GetBidStatus(bidID)
+		if err != nil {
+			h.logger.Errorf("Failed to get bid status: %v", err)
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Internal Server Error"})
+		}
+
+		return c.Status(fiber.StatusOK).JSON(fiber.Map{"status": status})
+	}
+}
+
+func (h Handler) CreateBid() fiber.Handler {
+	return func(c fiber.Ctx) error {
+		var req openapi.CreateBidRequest
+		if err := c.Bind().Body(&req); err != nil {
+			h.logger.Errorf("Failed to parse request body", err)
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
+		}
+
+		isResponsible, err := h.useCase.CheckUserOrganizationResponsibility(req.OrganizationId)
+		if err != nil {
+			h.logger.Errorf("Failed to check user responsibility", err)
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "InternalServerError"})
+		}
+
+		if !isResponsible {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "User not responsible for this organization"})
+		}
+
+		bid, err := h.useCase.CreateBid(&req)
+		if err != nil {
+			h.logger.Errorf("Failed to create tender", err)
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "InternalServerError"})
+		}
+
+		return c.Status(fiber.StatusOK).JSON(bid)
+	}
+}
+
+func (h *Handler) EditBid() fiber.Handler {
+	return func(c fiber.Ctx) error {
+		bidID := c.Params("bidId")
+		if bidID == "" {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "bidId is required"})
+		}
+
+		var req openapi.EditBidRequest
+		if err := c.Bind().Body(&req); err != nil {
+			h.logger.Errorf("Failed to parse request body: %v", err)
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
+		}
+
+		updatedBid, err := h.useCase.EditBid(bidID, &req)
+		if err != nil {
+			h.logger.Errorf("Failed to edit bid: %v", err)
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Internal Server Error"})
+		}
+
+		return c.Status(fiber.StatusOK).JSON(updatedBid)
+	}
+}
+
+func (h *Handler) UpdateBidStatus() fiber.Handler {
+	return func(c fiber.Ctx) error {
+		bidID := c.Params("bidId")
+		status := c.Params("status")
+		if bidID == "" || status == "" {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "bidId and status are required"})
+		}
+
+		err := h.useCase.UpdateBidStatus(bidID, status)
+		if err != nil {
+			h.logger.Errorf("Failed to update bid status: %v", err)
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Internal Server Error"})
+		}
+
+		return c.SendStatus(fiber.StatusOK)
+	}
+}
+
+func (h *Handler) RollbackBid() fiber.Handler {
+	return func(c fiber.Ctx) error {
+		bidID := c.Params("bidId")
+		version := c.Params("version")
+
+		rolledBackBid, err := h.useCase.RollbackBid(bidID, version)
+		if err != nil {
+			h.logger.Errorf("Failed to rollback bid", err)
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "InternalServerError"})
+		}
+
+		return c.Status(fiber.StatusOK).JSON(rolledBackBid)
+	}
+}

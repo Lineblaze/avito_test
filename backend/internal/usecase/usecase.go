@@ -100,6 +100,14 @@ func (u *UseCase) GetTenders() ([]openapi.Tender, error) {
 	return tenders, nil
 }
 
+func (u *UseCase) GetTenderByID(tenderID string) (*openapi.Tender, error) {
+	tender, err := u.repo.GetTenderByID(tenderID)
+	if err != nil {
+		return nil, fmt.Errorf("getting bid by ID: %w", err)
+	}
+	return tender, nil
+}
+
 func (u *UseCase) GetUserTenders(userName string) ([]*openapi.Tender, error) {
 	tenders, err := u.repo.GetUserTenders(userName)
 	if err != nil {
@@ -181,4 +189,130 @@ func (u *UseCase) RollbackTender(tenderID string, version string) (*openapi.Tend
 	return updatedTender, nil
 }
 
+func (u *UseCase) CanUserAccessTender(tenderID string) (bool, error) {
+	tender, err := u.repo.GetTenderByID(tenderID)
+	if err != nil {
+		return false, fmt.Errorf("failed to get tender: %w", err)
+	}
+
+	switch tender.Status {
+	case "Created", "Closed":
+		isResponsible, err := u.repo.IsUserResponsibleForOrganization(tender.OrganizationId)
+		if err != nil {
+			return false, fmt.Errorf("failed to check user responsibility: %w", err)
+		}
+		return isResponsible, nil
+
+	case "Open", "Published":
+		return true, nil
+
+	default:
+		return false, nil
+	}
+}
+
 // Bids
+
+func (u *UseCase) GetBidByID(bidID string) (*openapi.Bid, error) {
+	bid, err := u.repo.GetBidByID(bidID)
+	if err != nil {
+		return nil, fmt.Errorf("getting bid by ID: %w", err)
+	}
+	return bid, nil
+}
+
+func (u *UseCase) GetUserBids(userName string) ([]*openapi.Bid, error) {
+	bids, err := u.repo.GetUserBids(userName)
+	if err != nil {
+		return nil, fmt.Errorf("getting tenders: %w", err)
+	}
+	return bids, nil
+}
+
+func (u *UseCase) GetBidsByTenderID(tenderID string) ([]*openapi.Bid, error) {
+	bids, err := u.repo.GetBidsByTenderID(tenderID)
+	if err != nil {
+		return nil, fmt.Errorf("getting bids by tender ID: %w", err)
+	}
+	return bids, nil
+}
+
+func (u *UseCase) GetBidStatus(bidID string) (string, error) {
+	status, err := u.repo.GetBidStatus(bidID)
+	if err != nil {
+		return "", fmt.Errorf("getting bid status: %w", err)
+	}
+	return status, nil
+}
+
+func (u *UseCase) CreateBid(req *openapi.CreateBidRequest) (*openapi.Bid, error) {
+	exists, err := u.repo.BidExistsByTenderID(req.TenderId)
+	if err != nil {
+		return nil, fmt.Errorf("error checking existing bid for tender %s: %w", req.TenderId, err)
+	}
+
+	if exists {
+		return nil, fmt.Errorf("a bid for this tender %s already exists", req.TenderId)
+	}
+
+	bid := openapi.Bid{
+		Name:        req.Name,
+		Description: req.Description,
+		Status:      "Created",
+		TenderId:    req.TenderId,
+		AuthorId:    req.OrganizationId,
+		AuthorType:  "Organization",
+		Version:     1,
+	}
+
+	createdBid, err := u.repo.CreateBid(&bid)
+	if err != nil {
+		return nil, fmt.Errorf("creating bid: %w", err)
+	}
+
+	return createdBid, nil
+}
+
+func (u *UseCase) EditBid(bidID string, req *openapi.EditBidRequest) (*openapi.Bid, error) {
+	existingBid, err := u.repo.GetBidByID(bidID)
+	if err != nil {
+		return nil, fmt.Errorf("getting existing bid: %w", err)
+	}
+
+	if req.Name != nil {
+		existingBid.Name = *req.Name
+	}
+	if req.Description != nil {
+		existingBid.Description = *req.Description
+	}
+
+	existingBid.Version += 1
+
+	updatedBid, err := u.repo.EditBid(existingBid)
+	if err != nil {
+		return nil, fmt.Errorf("updating bid: %w", err)
+	}
+	return updatedBid, nil
+}
+
+func (u *UseCase) UpdateBidStatus(bidID string, status string) error {
+	err := u.repo.UpdateBidStatus(bidID, status)
+	if err != nil {
+		return fmt.Errorf("updating bid status: %w", err)
+	}
+	return nil
+}
+
+func (u *UseCase) RollbackBid(bidID string, version string) (*openapi.Bid, error) {
+	bidAtVersion, err := u.repo.GetBidByVersion(bidID, version)
+	if err != nil {
+		return nil, fmt.Errorf("retrieving bid version: %w", err)
+	}
+
+	updatedBid, err := u.repo.EditBid(bidAtVersion)
+	if err != nil {
+		return nil, fmt.Errorf("updating bid to rolled-back version: %w", err)
+	}
+
+	return updatedBid, nil
+}

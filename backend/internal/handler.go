@@ -19,4 +19,11 @@ type Handler interface {
 	EditTender() fiber.Handler
 	UpdateTenderStatus() fiber.Handler
 	RollbackTender() fiber.Handler
+	GetUserBids() fiber.Handler
+	GetBidsByTenderID() fiber.Handler
+	GetBidStatus() fiber.Handler
+	CreateBid() fiber.Handler
+	EditBid() fiber.Handler
+	UpdateBidStatus() fiber.Handler
+	RollbackBid() fiber.Handler
 }

@@ -141,18 +141,31 @@ func (p *PostgresRepository) CreateOrganization(organization *domain.Organizatio
 }
 
 func (p *PostgresRepository) AssignEmployeeToOrganization(orgResp *domain.OrganizationResponsible) (*domain.OrganizationResponsible, error) {
-	var assign domain.OrganizationResponsible
-
+	var exists bool
 	err := p.db.QueryRow(`
+        SELECT EXISTS(
+            SELECT 1 FROM organization_responsible WHERE user_id = $1
+        )`, orgResp.UserID).Scan(&exists)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to check if user is already responsible for an organization: %w", err)
+	}
+
+	if exists {
+		return nil, fmt.Errorf("user is already responsible for another organization")
+	}
+
+	var assign domain.OrganizationResponsible
+	err = p.db.QueryRow(`
         INSERT INTO organization_responsible (organization_id, user_id)
         VALUES ($1, $2)
         RETURNING id, organization_id, user_id`,
 		orgResp.OrganizationID,
 		orgResp.UserID,
 	).Scan(
-		&orgResp.ID,
-		&orgResp.OrganizationID,
-		&orgResp.UserID,
+		&assign.ID,
+		&assign.OrganizationID,
+		&assign.UserID,
 	)
 
 	if err != nil {
@@ -405,3 +418,252 @@ func (p *PostgresRepository) UpdateTenderStatus(tenderID string, status string) 
 }
 
 // Bids
+
+func (p *PostgresRepository) GetBidByID(bidId string) (*openapi.Bid, error) {
+	var bid openapi.Bid
+	var createdAt time.Time
+
+	err := p.db.QueryRow(`
+		SELECT id, name, description, status, tender_id, author_type, author_id, version, created_at
+		FROM bid
+		WHERE id = $1`, bidId,
+	).Scan(
+		&bid.Id,
+		&bid.Name,
+		&bid.Description,
+		&bid.Status,
+		&bid.TenderId,
+		&bid.AuthorType,
+		&bid.AuthorId,
+		&bid.Version,
+		&createdAt,
+	)
+
+	if err != nil {
+		return nil, fmt.Errorf("querying bid: %w", err)
+	}
+
+	bid.CreatedAt = createdAt.Format(time.RFC3339)
+
+	return &bid, nil
+}
+
+func (p *PostgresRepository) BidExistsByTenderID(tenderId string) (bool, error) {
+	var count int
+
+	err := p.db.QueryRow(`
+        SELECT COUNT(*)
+        FROM bid
+        WHERE tender_id = $1`, tenderId,
+	).Scan(&count)
+
+	if err != nil {
+		return false, fmt.Errorf("failed to check bid existence by tender ID: %w", err)
+	}
+
+	return count > 0, nil
+}
+
+func (p *PostgresRepository) GetBidsByTenderID(tenderId string) ([]*openapi.Bid, error) {
+	var bids []*openapi.Bid
+
+	rows, err := p.db.Query(`
+        SELECT id, name, description, status, tender_id, author_type, author_id, version, created_at
+        FROM bid
+        WHERE tender_id = $1`, tenderId)
+
+	if err != nil {
+		return nil, fmt.Errorf("error fetching bids: %w", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var bid openapi.Bid
+		var createdAt time.Time
+		if err = rows.Scan(
+			&bid.Id,
+			&bid.Name,
+			&bid.Description,
+			&bid.Status,
+			&bid.TenderId,
+			&bid.AuthorType,
+			&bid.AuthorId,
+			&bid.Version,
+			&createdAt,
+		); err != nil {
+			return nil, err
+		}
+		bid.CreatedAt = createdAt.Format(time.RFC3339)
+		bids = append(bids, &bid)
+	}
+
+	return bids, nil
+}
+
+func (p *PostgresRepository) GetUserBids(userName string) ([]*openapi.Bid, error) {
+	var bids []*openapi.Bid
+	var organizationId uuid.UUID
+
+	err := p.db.QueryRow(`
+        SELECT o.id 
+        FROM employee e
+        JOIN organization_responsible orp ON e.id = orp.user_id
+        JOIN organization o ON orp.organization_id = o.id
+        WHERE e.username = $1`, userName).Scan(&organizationId)
+
+	if err != nil {
+		return nil, fmt.Errorf("error fetching organization ID: %w", err)
+	}
+
+	rows, err := p.db.Query(`
+        SELECT id, name, description, status, tender_id, author_type, author_id, version, created_at
+        FROM bid
+        WHERE author_id = $1`, organizationId)
+
+	if err != nil {
+		return nil, fmt.Errorf("error fetching tenders: %w", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var bid openapi.Bid
+		var createdAt time.Time
+		if err = rows.Scan(
+			&bid.Id,
+			&bid.Name,
+			&bid.Description,
+			&bid.Status,
+			&bid.TenderId,
+			&bid.AuthorId,
+			&bid.AuthorType,
+			&bid.Version,
+			&createdAt,
+		); err != nil {
+			return nil, err
+		}
+		bid.CreatedAt = createdAt.Format(time.RFC3339)
+		bids = append(bids, &bid)
+	}
+
+	return bids, nil
+}
+
+func (p *PostgresRepository) GetBidByVersion(bidID string, version string) (*openapi.Bid, error) {
+	var bid openapi.Bid
+	var createdAt time.Time
+
+	err := p.db.QueryRow(`
+	SELECT bid_id, name, description, status, tender_id, author_type, author_id, version, created_at
+	FROM bid_version
+	WHERE bid_id = $1 AND version = $2`,
+		bidID, version).Scan(
+		&bid.Id,
+		&bid.Name,
+		&bid.Description,
+		&bid.Status,
+		&bid.TenderId,
+		&bid.AuthorType,
+		&bid.AuthorId,
+		&bid.Version,
+		&createdAt,
+	)
+
+	if err != nil {
+		return nil, fmt.Errorf("error retrieving bid by version: %w", err)
+	}
+
+	bid.CreatedAt = createdAt.Format(time.RFC3339)
+	return &bid, nil
+}
+
+func (p *PostgresRepository) GetBidStatus(bidID string) (string, error) {
+	var status string
+	err := p.db.QueryRow(`
+		SELECT status 
+		FROM bid
+		WHERE id = $1`, bidID).Scan(&status)
+	if err != nil {
+		return "", fmt.Errorf("failed to get bid status: %w", err)
+	}
+	return status, nil
+}
+
+func (p *PostgresRepository) CreateBid(bid *openapi.Bid) (*openapi.Bid, error) {
+	var createdBid openapi.Bid
+	var createdAt time.Time
+
+	err := p.db.QueryRow(`
+        INSERT INTO bid (name, description, status, tender_id, author_id, author_type, version, created_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+        RETURNING id, name, description, status, tender_id, author_id, author_type, version, created_at`,
+		bid.Name, bid.Description, bid.Status, bid.TenderId, bid.AuthorId, bid.AuthorType, bid.Version,
+	).Scan(
+		&createdBid.Id,
+		&createdBid.Name,
+		&createdBid.Description,
+		&createdBid.Status,
+		&createdBid.TenderId,
+		&createdBid.AuthorId,
+		&createdBid.AuthorType,
+		&createdBid.Version,
+		&createdAt,
+	)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to create bid: %w", err)
+	}
+
+	createdBid.CreatedAt = createdAt.Format(time.RFC3339)
+
+	return &createdBid, nil
+}
+
+func (p *PostgresRepository) EditBid(bid *openapi.Bid) (*openapi.Bid, error) {
+	_, err := p.db.Exec(`
+		INSERT INTO bid_version (id, bid_id, name, description, status, tender_id, author_type, author_id, version, created_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+		uuid.New(), bid.Id, bid.Name, bid.Description, bid.Status, bid.TenderId, bid.AuthorType, bid.AuthorId, bid.Version, bid.CreatedAt,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("error saving bid version: %w", err)
+	}
+
+	var updatedBid openapi.Bid
+	var createdAt time.Time
+
+	err = p.db.QueryRow(`
+		UPDATE bid
+		SET name = $1, description = $2, status = $3, version = version + 1
+		WHERE id = $4
+		RETURNING id, name, description, status, tender_id, author_type, author_id, version, created_at`,
+		bid.Name, bid.Description, bid.Status, bid.Id).Scan(
+		&updatedBid.Id,
+		&updatedBid.Name,
+		&updatedBid.Description,
+		&updatedBid.Status,
+		&updatedBid.TenderId,
+		&updatedBid.AuthorType,
+		&updatedBid.AuthorId,
+		&updatedBid.Version,
+		&createdAt,
+	)
+
+	if err != nil {
+		return nil, fmt.Errorf("error updating bid: %w", err)
+	}
+
+	updatedBid.CreatedAt = createdAt.Format(time.RFC3339)
+
+	return &updatedBid, nil
+}
+
+func (p *PostgresRepository) UpdateBidStatus(bidID string, status string) error {
+	_, err := p.db.Exec(`
+		UPDATE bid
+		SET status = $1
+		WHERE id = $2`, status, bidID)
+	if err != nil {
+		return fmt.Errorf("failed to update bid status: %w", err)
+	}
+	return nil
+}
