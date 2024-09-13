@@ -369,7 +369,17 @@ func (h Handler) SubmitBidDecision() fiber.Handler {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "InternalServerError"})
 		}
 
-		return c.Status(fiber.StatusOK).JSON(fiber.Map{"message": "Bid decision submitted successfully"})
+		tenderClosed := false
+		if decision == "Approved" {
+			tenderClosed, _ = h.useCase.IsTenderClosed(bidId)
+		}
+
+		successMessage := "Bid decision submitted successfully"
+		if tenderClosed {
+			successMessage = "Bid decision submitted successfully and tender is closed"
+		}
+
+		return c.Status(fiber.StatusOK).JSON(fiber.Map{"message": successMessage})
 	}
 }
 

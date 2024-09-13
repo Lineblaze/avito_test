@@ -327,7 +327,36 @@ func (u *UseCase) SubmitBidDecision(bidId string, decision string, username stri
 		return fmt.Errorf("error updating bid decision for bid %s: %w", bidId, err)
 	}
 
-	if decision == "Approved" {
+	decisions, err := u.repo.GetBidDecisions(bidId)
+	if err != nil {
+		return fmt.Errorf("error getting bid decisions for bid %s: %w", bidId, err)
+	}
+
+	for _, d := range decisions {
+		if d == "Rejected" {
+			err = u.repo.RejectBid(bidId)
+			if err != nil {
+				return fmt.Errorf("error rejecting bid %s: %w", bidId, err)
+			}
+			return nil
+		}
+	}
+
+	responsibles, err := u.repo.GetResponsibleUsersForOrganization()
+	if err != nil {
+		return fmt.Errorf("error getting responsible users for organization: %w", err)
+	}
+
+	quorum := len(responsibles)
+
+	approvedCount := 0
+	for _, d := range decisions {
+		if d == "Approved" {
+			approvedCount++
+		}
+	}
+
+	if approvedCount >= quorum && quorum >= 3 {
 		err = u.repo.CloseTenderByBid(bidId)
 		if err != nil {
 			return fmt.Errorf("error closing tender after bid approval for bid %s: %w", bidId, err)
@@ -335,6 +364,14 @@ func (u *UseCase) SubmitBidDecision(bidId string, decision string, username stri
 	}
 
 	return nil
+}
+
+func (u *UseCase) IsTenderClosed(bidId string) (bool, error) {
+	tenderStatus, err := u.repo.GetTenderStatusByBid(bidId)
+	if err != nil {
+		return false, fmt.Errorf("error getting tender status for bid %s: %w", bidId, err)
+	}
+	return tenderStatus == "Closed", nil
 }
 
 func (u *UseCase) SubmitBidFeedback(bidId string, feedback string, username string) error {

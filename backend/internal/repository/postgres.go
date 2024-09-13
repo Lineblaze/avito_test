@@ -205,6 +205,33 @@ func (p *PostgresRepository) IsUserResponsibleForOrganizationByUsername(username
 
 	return count > 0, nil
 }
+func (p *PostgresRepository) GetResponsibleUsersForOrganization() ([]string, error) {
+	var usernames []string
+
+	rows, err := p.db.Query(`
+		SELECT e.username
+		FROM organization_responsible org
+		JOIN employee e ON org.user_id = e.id
+	`)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get responsible users: %w", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var username string
+		if err = rows.Scan(&username); err != nil {
+			return nil, fmt.Errorf("failed to scan row: %w", err)
+		}
+		usernames = append(usernames, username)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating over rows: %w", err)
+	}
+
+	return usernames, nil
+}
 
 // Tenders
 
@@ -684,6 +711,32 @@ func (p *PostgresRepository) UpdateBidStatus(bidID string, status string) error 
 	return nil
 }
 
+func (p *PostgresRepository) GetBidDecisions(bidId string) ([]openapi.BidDecision, error) {
+	var decisions []openapi.BidDecision
+
+	err := p.db.Select(&decisions, `
+		SELECT decision
+		FROM bid_decision
+		WHERE bid_id = $1
+	`, bidId)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get bid decisions for bid %s: %w", bidId, err)
+	}
+
+	return decisions, nil
+}
+
+func (p *PostgresRepository) RejectBid(bidId string) error {
+	_, err := p.db.Exec(`
+		UPDATE bid SET status = 'Rejected' WHERE id = $1
+	`, bidId)
+	if err != nil {
+		return fmt.Errorf("failed to reject bid %s: %w", bidId, err)
+	}
+
+	return nil
+}
+
 func (p *PostgresRepository) UpdateBidDecision(bidId string, decision string, username string) error {
 	_, err := p.db.Exec(`
 		INSERT INTO bid_decision (bid_id, decision, username)
@@ -697,6 +750,20 @@ func (p *PostgresRepository) UpdateBidDecision(bidId string, decision string, us
 	}
 
 	return nil
+}
+
+func (p *PostgresRepository) GetTenderStatusByBid(bidId string) (string, error) {
+	var status string
+	err := p.db.Get(&status, `
+		SELECT t.status 
+		FROM tender t
+		JOIN bid b ON t.id = b.tender_id
+		WHERE b.id = $1
+	`, bidId)
+	if err != nil {
+		return "", fmt.Errorf("failed to get tender status for bid %s: %w", bidId, err)
+	}
+	return status, nil
 }
 
 func (p *PostgresRepository) CloseTenderByBid(bidId string) error {

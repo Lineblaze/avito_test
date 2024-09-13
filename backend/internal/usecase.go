@@ -36,6 +36,7 @@ type UseCase interface {
 	UpdateBidStatus(bidID string, status string) error
 	RollbackBid(bidID string, version string) (*openapi.Bid, error)
 	SubmitBidDecision(bidId string, decision string, username string) error
+	IsTenderClosed(bidId string) (bool, error)
 	SubmitBidFeedback(bidId string, feedback string, username string) error
 	GetBidReviewsByTenderId(tenderId string) ([]openapi.BidReview, error)
 }
