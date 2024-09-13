@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 963852741
+      POSTGRES_DB: tenders
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  tenders-service:
+    build:
+      context: ../
+      dockerfile: Dockerfile
+    environment:
+      - POSTGRES_CONN=postgres://postgres:963852741@postgres:5432/tenders
+      - SERVER_ADDRESS=0.0.0.0:8080
+    depends_on:
+      - postgres
+    ports:
+      - "8080:8080"
+
+volumes:
+  pgdata:

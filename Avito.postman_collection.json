@@ -1,0 +1,756 @@
+{
+	"info": {
+		"_postman_id": "355ffd1b-3306-4c64-b7f5-88963cb89de3",
+		"name": "Avito",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "28283003"
+	},
+	"item": [
+		{
+			"name": "Users",
+			"item": [
+				{
+					"name": "Create Employee",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"username\": \"lineblaze4\",\r\n    \"first_name\": \"Roman\",\r\n    \"last_name\": \"Kochanov\"\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "localhost:8080/api/employee/new",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"employee",
+								"new"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Organization",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"name\": \"Three\",\r\n    \"description\": \"Test\",\r\n    \"type\": \"IE\"\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "localhost:8080/api/organization/new",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"organization",
+								"new"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Assign",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"organizationId\": \"dc1cb14b-c940-40b3-9415-559f59acb046\",\r\n    \"userId\": \"adce3238-30ad-4de9-8df2-cd35fe9f3ad9\"\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "localhost:8080/api/assign",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"assign"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Logic",
+			"item": [
+				{
+					"name": "Tenders",
+					"item": [
+						{
+							"name": "Create Tender",
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"name\": \"Тендер 3\",\r\n    \"description\": \"Описание тендера\",\r\n    \"serviceType\": \"Construction\",\r\n    \"status\": \"Open\",\r\n    \"organizationId\": \"874fdc00-8bb4-4423-894e-01a6a3937883\",\r\n    \"creatorUsername\": \"user2\"\r\n}\r\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "localhost:8080/api/tenders/new",
+									"host": [
+										"localhost"
+									],
+									"port": "8080",
+									"path": [
+										"api",
+										"tenders",
+										"new"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get Tenders",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "localhost:8080/api/tenders",
+									"host": [
+										"localhost"
+									],
+									"port": "8080",
+									"path": [
+										"api",
+										"tenders"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get Tender Status",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "localhost:8080/api/tenders/1beb8ef8-1b30-4a4e-9181-b41dabb17d1b/status",
+									"host": [
+										"localhost"
+									],
+									"port": "8080",
+									"path": [
+										"api",
+										"tenders",
+										"1beb8ef8-1b30-4a4e-9181-b41dabb17d1b",
+										"status"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get User Tenders",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "localhost:8080/api/tenders/my?username=lineblaze",
+									"host": [
+										"localhost"
+									],
+									"port": "8080",
+									"path": [
+										"api",
+										"tenders",
+										"my"
+									],
+									"query": [
+										{
+											"key": "username",
+											"value": "lineblaze"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Edit Tender",
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "PATCH",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "  {\r\n    \"name\": \"Обновленный Тендер 7\",\r\n    \"description\": \"Обновленное описание\"\r\n  }\r\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "localhost:8080/api/tenders/fddec3dc-8df3-4743-bba1-72e39609a180/edit",
+									"host": [
+										"localhost"
+									],
+									"port": "8080",
+									"path": [
+										"api",
+										"tenders",
+										"fddec3dc-8df3-4743-bba1-72e39609a180",
+										"edit"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Update Tender Status",
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "localhost:8080/api/tenders/1beb8ef8-1b30-4a4e-9181-b41dabb17d1b/status/Created",
+									"host": [
+										"localhost"
+									],
+									"port": "8080",
+									"path": [
+										"api",
+										"tenders",
+										"1beb8ef8-1b30-4a4e-9181-b41dabb17d1b",
+										"status",
+										"Created"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Rollback Tender",
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "localhost:8080/api/tenders/fddec3dc-8df3-4743-bba1-72e39609a180/rollback/11",
+									"host": [
+										"localhost"
+									],
+									"port": "8080",
+									"path": [
+										"api",
+										"tenders",
+										"fddec3dc-8df3-4743-bba1-72e39609a180",
+										"rollback",
+										"11"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Bids",
+					"item": [
+						{
+							"name": "Create Bid",
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "  {\r\n    \"name\": \"Предложение 3\",\r\n    \"description\": \"Описание предложения\",\r\n    \"status\": \"Open\",\r\n    \"tenderId\": \"2da6af53-6733-4435-9da9-ae8fa425046c\",\r\n    \"organizationId\": \"874fdc00-8bb4-4423-894e-01a6a3937883\",\r\n    \"creatorUsername\": \"lineblaze\"\r\n  }",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "localhost:8080/api/bids/new",
+									"host": [
+										"localhost"
+									],
+									"port": "8080",
+									"path": [
+										"api",
+										"bids",
+										"new"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get Bids By TenderID",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "localhost:8080/api/bids/fddec3dc-8df3-4743-bba1-72e39609a180/list",
+									"host": [
+										"localhost"
+									],
+									"port": "8080",
+									"path": [
+										"api",
+										"bids",
+										"fddec3dc-8df3-4743-bba1-72e39609a180",
+										"list"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get Bid Status",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "localhost:8080/api/bids/2099d84b-04db-4308-8775-ec793c5a3fb1/status",
+									"host": [
+										"localhost"
+									],
+									"port": "8080",
+									"path": [
+										"api",
+										"bids",
+										"2099d84b-04db-4308-8775-ec793c5a3fb1",
+										"status"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get User Bids",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "localhost:8080/api/bids/my?username=lineblaze",
+									"host": [
+										"localhost"
+									],
+									"port": "8080",
+									"path": [
+										"api",
+										"bids",
+										"my"
+									],
+									"query": [
+										{
+											"key": "username",
+											"value": "lineblaze"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Edit Bid",
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "PATCH",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "  {\r\n    \"name\": \"Обновленное предложение\",\r\n    \"description\": \"Обновленное описание\"\r\n  }\r\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "localhost:8080/api/bids/2099d84b-04db-4308-8775-ec793c5a3fb1/edit",
+									"host": [
+										"localhost"
+									],
+									"port": "8080",
+									"path": [
+										"api",
+										"bids",
+										"2099d84b-04db-4308-8775-ec793c5a3fb1",
+										"edit"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Update Bid Status",
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "localhost:8080/api/bids/2099d84b-04db-4308-8775-ec793c5a3fb1/status/Published",
+									"host": [
+										"localhost"
+									],
+									"port": "8080",
+									"path": [
+										"api",
+										"bids",
+										"2099d84b-04db-4308-8775-ec793c5a3fb1",
+										"status",
+										"Published"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Submit Bid Decision",
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "localhost:8080/api/bids/2099d84b-04db-4308-8775-ec793c5a3fb1/submit_decision/Approved/lineblaze",
+									"host": [
+										"localhost"
+									],
+									"port": "8080",
+									"path": [
+										"api",
+										"bids",
+										"2099d84b-04db-4308-8775-ec793c5a3fb1",
+										"submit_decision",
+										"Approved",
+										"lineblaze"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Submit Bid Feedback",
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "localhost:8080/api/bids/2099d84b-04db-4308-8775-ec793c5a3fb1/feedback/test_feedback_2/lineblaze",
+									"host": [
+										"localhost"
+									],
+									"port": "8080",
+									"path": [
+										"api",
+										"bids",
+										"2099d84b-04db-4308-8775-ec793c5a3fb1",
+										"feedback",
+										"test_feedback_2",
+										"lineblaze"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get Reviews",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "localhost:8080/api/bids/fddec3dc-8df3-4743-bba1-72e39609a180/reviews/lineblaze",
+									"host": [
+										"localhost"
+									],
+									"port": "8080",
+									"path": [
+										"api",
+										"bids",
+										"fddec3dc-8df3-4743-bba1-72e39609a180",
+										"reviews",
+										"lineblaze"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Rollback Bid",
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "localhost:8080/api/bids/2099d84b-04db-4308-8775-ec793c5a3fb1/rollback/7",
+									"host": [
+										"localhost"
+									],
+									"port": "8080",
+									"path": [
+										"api",
+										"bids",
+										"2099d84b-04db-4308-8775-ec793c5a3fb1",
+										"rollback",
+										"7"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Ping",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:8080/api/ping",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"ping"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

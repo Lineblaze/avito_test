@@ -1,15 +1,28 @@
-FROM gradle:4.7.0-jdk8-alpine AS build
-COPY --chown=gradle:gradle . /home/gradle/src
-WORKDIR /home/gradle/src
-RUN gradle build --no-daemon 
+FROM golang:1.22-alpine AS builder
 
-FROM openjdk:8-jre-slim
+ENV CGO_ENABLED=0 GOOS=linux
+
+WORKDIR /zadanie-6105/backend
+
+COPY backend/go.mod backend/go.sum ./
+
+RUN go mod download
+
+COPY backend/ ./
+
+WORKDIR /zadanie-6105/backend/cmd/app
+
+RUN go build -o /app/tenders-service
+
+FROM alpine:latest
+
+ENV POSTGRES_CONN=postgres://postgres:963852741@postgres:5432/tenders
+ENV SERVER_ADDRESS=0.0.0.0:8080
+
+WORKDIR /app
+
+COPY --from=builder /app/tenders-service .
 
 EXPOSE 8080
 
-RUN mkdir /app
-
-COPY --from=build /home/gradle/src/build/libs/*.jar /app/spring-boot-application.jar
-
-ENTRYPOINT ["java", "-XX:+UnlockExperimentalVMOptions", "-XX:+UseCGroupMemoryLimitForHeap", "-Djava.security.egd=file:/dev/./urandom","-jar","/app/spring-boot-application.jar"]
-
+CMD ["./tenders-service"]

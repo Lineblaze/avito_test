@@ -1,38 +1,31 @@
-# Gradle Docker Codefresh example
+https://github.com/Lineblaze/avito_gen - Пакет c OpenAPI генерацией
 
-This is an example Java application that uses Spring Boot 2, Gradle and Docker
-It is compiled using Codefresh.
+Используются следующие роуты :
 
-If you are looking for Maven, then see this [example](https://github.com/codefresh-contrib/spring-boot-2-sample-app)
+	r.Get(`/ping`, h.Ping())
 
-## Create a multi-stage docker image
+	r.Post(`/employee/new`, h.CreateEmployee())
+	r.Post(`/organization/new`, h.CreateOrganization())
+	r.Post(`/assign`, h.AssignEmployeeToOrganization())
 
-To compile and package using Docker multi-stage builds
+	r.Get(`/tenders`, h.GetTenders())
+	r.Get(`/tenders/my`, h.GetUserTenders())
+	r.Get("/tenders/:tenderId/status", h.GetTenderStatus())
+	r.Post(`/tenders/new`, h.CreateTender())
+	r.Patch(`/tenders/:tenderId/edit`, h.EditTender())
+	r.Put(`/tenders/:tenderId/rollback/:version`, h.RollbackTender())
+	r.Put("/tenders/:tenderId/status/:status", h.UpdateTenderStatus())
 
-```bash
-docker build . -t my-app
-```
+	r.Get(`/bids/my`, h.GetUserBids())
+	r.Get(`/bids/:tenderId/list`, h.GetBidsByTenderID())
+	r.Get("/bids/:bidId/status", h.GetBidStatus())
+	r.Post(`/bids/new`, h.CreateBid())
+	r.Patch(`/bids/:bidId/edit`, h.EditBid())
+	r.Put(`/bids/:bidId/rollback/:version`, h.RollbackBid())
+	r.Put("/bids/:bidId/status/:status", h.UpdateBidStatus())
 
-## Create a Docker image packaging an existing jar
+	r.Get("/bids/:tenderId/reviews/:username", h.GetBidReviews())
+	r.Put("/bids/:bidId/submit_decision/:decision/:username", h.SubmitBidDecision())
+	r.Put("/bids/:bidId/feedback/:feedback/:username", h.SubmitBidFeedback())
 
-```bash
-./gradlew build
-docker build . -t my-app -f Dockerfile.only-package
-```
-
-## To run the docker image
-
-```bash
-docker run -p 8080:8080 my-app
-```
-
-And then visit http://localhost:8080 in your browser.
-
-## To use this project in Codefresh
-
-There is also a [codefresh.yml](codefresh.yml) for easy usage with the [Codefresh](codefresh.io) CI/CD platform.
-
-For the simple packaging pipeline see [codefresh-package-only.yml](codefresh-package-only.yml)
-
-More details can be found in [Codefresh documentation](https://codefresh.io/docs/docs/learn-by-example/java/gradle/)
-
+Есть Avito.postman_collection в файлах проекта
