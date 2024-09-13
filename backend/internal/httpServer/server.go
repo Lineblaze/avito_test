@@ -1,7 +1,6 @@
 package httpServer
 
 import (
-	"fmt"
 	gojson "github.com/goccy/go-json"
 	"github.com/gofiber/fiber/v3"
 	"zadanie-6105/backend/internal/common/config"
@@ -30,11 +29,13 @@ func NewServer(cfg *config.Config, apiLogger *logger.ApiLogger, handler *httpErr
 
 func (s *Server) Run() error {
 	if err := s.MapHandlers(s.fiber, s.apiLogger); err != nil {
-		s.apiLogger.Fatalf("Cannot map handlers: ", err)
+		s.apiLogger.Fatalf("Cannot map handlers: %v", err)
 	}
-	s.apiLogger.Infof("Start server on port: %s:%s", s.cfg.Server.Host, s.cfg.Server.Port)
-	if err := s.fiber.Listen(fmt.Sprintf("%s:%s", s.cfg.Server.Host, s.cfg.Server.Port)); err != nil {
-		s.apiLogger.Fatalf("Error starting Server: ", err)
+
+	s.apiLogger.Infof("Start server on address: %s", s.cfg.Server.Address)
+
+	if err := s.fiber.Listen(s.cfg.Server.Address); err != nil {
+		s.apiLogger.Fatalf("Error starting server: %v", err)
 	}
 	return nil
 }

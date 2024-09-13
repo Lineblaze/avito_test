@@ -1,56 +1,88 @@
 package config
 
 import (
-	"github.com/spf13/viper"
 	"log"
+	"os"
 )
 
 type Config struct {
-	ServiceName string `json:"serviceName"`
+	ServiceName string
 
 	Postgres struct {
-		Host     string `json:"host"`
-		Port     string `json:"port"`
-		User     string `json:"user"`
-		Password string `json:"password"`
-		DBName   string `json:"DBName"`
-		SSLMode  string `json:"sslMode"`
-		PgDriver string `json:"pgDriver"`
-	} `json:"Postgres"`
+		ConnURL  string
+		JDBCURL  string
+		User     string
+		Password string
+		Host     string
+		Port     string
+		DBName   string
+		SSLMode  string
+		PgDriver string
+	}
 
 	Server struct {
-		Host                        string `json:"host" validate:"required"`
-		Port                        string `json:"port" validate:"required"`
-		ShowUnknownErrorsInResponse bool   `json:"showUnknownErrorsInResponse"`
-	} `json:"Server"`
+		Address                     string
+		ShowUnknownErrorsInResponse bool
+	}
 
 	Logger struct {
-		Level          string `json:"level"`
-		SkipFrameCount int    `json:"skipFrameCount"`
-		InFile         bool   `json:"inFile"`
-		FilePath       string `json:"filePath"`
-		InRemote       bool   `json:"inRemote"`
-	} `json:"logger"`
+		Level          string
+		SkipFrameCount int
+		InFile         bool
+		FilePath       string
+		InRemote       bool
+	}
 }
 
-func LoadConfig() (*viper.Viper, error) {
-	v := viper.New()
-	v.AddConfigPath("config")
-	v.SetConfigName("config")
-	v.SetConfigType("yml")
-	err := v.ReadInConfig()
-	if err != nil {
-		return nil, err
+func LoadConfig() *Config {
+	c := &Config{
+		ServiceName: "Tenders",
+		Postgres: struct {
+			ConnURL  string
+			JDBCURL  string
+			User     string
+			Password string
+			Host     string
+			Port     string
+			DBName   string
+			SSLMode  string
+			PgDriver string
+		}{
+			ConnURL:  os.Getenv("POSTGRES_CONN"),
+			JDBCURL:  os.Getenv("POSTGRES_JDBC_URL"),
+			User:     os.Getenv("POSTGRES_USERNAME"),
+			Password: os.Getenv("POSTGRES_PASSWORD"),
+			Host:     os.Getenv("POSTGRES_HOST"),
+			Port:     os.Getenv("POSTGRES_PORT"),
+			DBName:   os.Getenv("POSTGRES_DATABASE"),
+			SSLMode:  "disable",
+			PgDriver: "pgx",
+		},
+		Server: struct {
+			Address                     string
+			ShowUnknownErrorsInResponse bool
+		}{
+			Address:                     os.Getenv("SERVER_ADDRESS"),
+			ShowUnknownErrorsInResponse: false,
+		},
+		Logger: struct {
+			Level          string
+			SkipFrameCount int
+			InFile         bool
+			FilePath       string
+			InRemote       bool
+		}{
+			Level:          "info",
+			SkipFrameCount: 3,
+			InFile:         false,
+			FilePath:       "",
+			InRemote:       false,
+		},
 	}
-	return v, nil
-}
 
-func ParseConfig(v *viper.Viper) (*Config, error) {
-	var c Config
-	err := v.Unmarshal(&c)
-	if err != nil {
-		log.Fatalf("unable to decode config into struct, %v", err)
-		return nil, err
+	if c.Postgres.ConnURL == "" || c.Server.Address == "" {
+		log.Fatalf("Required environment variables not set")
 	}
-	return &c, nil
+
+	return c
 }
