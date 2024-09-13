@@ -5,7 +5,6 @@ import (
 	openapi "github.com/Lineblaze/avito_gen"
 	"github.com/google/uuid"
 	"time"
-	"zadanie-6105/backend/internal/domain"
 	"zadanie-6105/backend/pkg/storage/postgres"
 )
 
@@ -20,18 +19,18 @@ func NewPostgresRepository(db postgres.Postgres) *PostgresRepository {
 
 // Employee
 
-func (p *PostgresRepository) GetEmployeeByID(id int64) (*domain.Employee, error) {
-	var employee domain.Employee
+func (p *PostgresRepository) GetEmployeeByID(id int64) (*openapi.Employee, error) {
+	var employee openapi.Employee
 
 	err := p.db.QueryRow(`
 		SELECT id, username, first_name, last_name, created_at, updated_at
 		FROM employee
 		WHERE id = $1`, id,
 	).Scan(
-		&employee.ID,
+		&employee.Id,
 		&employee.Username,
-		&employee.FirstName,
-		&employee.LastName,
+		&employee.Firstname,
+		&employee.Lastname,
 		&employee.CreatedAt,
 		&employee.UpdatedAt,
 	)
@@ -43,18 +42,18 @@ func (p *PostgresRepository) GetEmployeeByID(id int64) (*domain.Employee, error)
 	return &employee, nil
 }
 
-func (p *PostgresRepository) GetEmployeeByUsername(username string) (*domain.Employee, error) {
-	var employee domain.Employee
+func (p *PostgresRepository) GetEmployeeByUsername(username string) (*openapi.Employee, error) {
+	var employee openapi.Employee
 
 	err := p.db.QueryRow(`
 		SELECT id, username, first_name, last_name, created_at, updated_at
 		FROM employee
 		WHERE username = $1`, username,
 	).Scan(
-		&employee.ID,
+		&employee.Id,
 		&employee.Username,
-		&employee.FirstName,
-		&employee.LastName,
+		&employee.Firstname,
+		&employee.Lastname,
 		&employee.CreatedAt,
 		&employee.UpdatedAt,
 	)
@@ -66,8 +65,8 @@ func (p *PostgresRepository) GetEmployeeByUsername(username string) (*domain.Emp
 	return &employee, nil
 }
 
-func (p *PostgresRepository) CreateEmployee(employee *domain.Employee) (*domain.Employee, error) {
-	var createdEmployee domain.Employee
+func (p *PostgresRepository) CreateEmployee(employee *openapi.Employee) (*openapi.Employee, error) {
+	var createdEmployee openapi.Employee
 	var createdAt time.Time
 
 	err := p.db.QueryRow(`
@@ -75,13 +74,13 @@ func (p *PostgresRepository) CreateEmployee(employee *domain.Employee) (*domain.
         VALUES ($1, $2, $3, NOW())
         RETURNING id, username, first_name, last_name, created_at`,
 		employee.Username,
-		employee.FirstName,
-		employee.LastName,
+		employee.Firstname,
+		employee.Lastname,
 	).Scan(
-		&createdEmployee.ID,
+		&createdEmployee.Id,
 		&createdEmployee.Username,
-		&createdEmployee.FirstName,
-		&createdEmployee.LastName,
+		&createdEmployee.Firstname,
+		&createdEmployee.Lastname,
 		&createdAt,
 	)
 
@@ -96,14 +95,14 @@ func (p *PostgresRepository) CreateEmployee(employee *domain.Employee) (*domain.
 
 // Organization
 
-func (p *PostgresRepository) GetOrganizationByID(id int64) (*domain.Organization, error) {
-	var organization domain.Organization
+func (p *PostgresRepository) GetOrganizationByID(id int64) (*openapi.Organization, error) {
+	var organization openapi.Organization
 
 	err := p.db.QueryRow(`
 		SELECT id, name, description, type, created_at
 		FROM organization
 		WHERE id = $1`, id,
-	).Scan(&organization.ID, &organization.Name, &organization.Description, &organization.Type, &organization.CreatedAt)
+	).Scan(&organization.Id, &organization.Name, &organization.Description, &organization.Type, &organization.CreatedAt)
 
 	if err != nil {
 		return nil, fmt.Errorf("querying organization: %w", err)
@@ -112,8 +111,8 @@ func (p *PostgresRepository) GetOrganizationByID(id int64) (*domain.Organization
 	return &organization, nil
 }
 
-func (p *PostgresRepository) CreateOrganization(organization *domain.Organization) (*domain.Organization, error) {
-	var createdOrganization domain.Organization
+func (p *PostgresRepository) CreateOrganization(organization *openapi.Organization) (*openapi.Organization, error) {
+	var createdOrganization openapi.Organization
 	var createdAt time.Time
 
 	err := p.db.QueryRow(`
@@ -124,7 +123,7 @@ func (p *PostgresRepository) CreateOrganization(organization *domain.Organizatio
 		organization.Description,
 		organization.Type,
 	).Scan(
-		&createdOrganization.ID,
+		&createdOrganization.Id,
 		&createdOrganization.Name,
 		&createdOrganization.Description,
 		&createdOrganization.Type,
@@ -140,12 +139,12 @@ func (p *PostgresRepository) CreateOrganization(organization *domain.Organizatio
 	return &createdOrganization, nil
 }
 
-func (p *PostgresRepository) AssignEmployeeToOrganization(orgResp *domain.OrganizationResponsible) (*domain.OrganizationResponsible, error) {
+func (p *PostgresRepository) AssignEmployeeToOrganization(orgResp *openapi.OrganizationResponsible) (*openapi.OrganizationResponsible, error) {
 	var exists bool
 	err := p.db.QueryRow(`
         SELECT EXISTS(
             SELECT 1 FROM organization_responsible WHERE user_id = $1
-        )`, orgResp.UserID).Scan(&exists)
+        )`, orgResp.UserId).Scan(&exists)
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to check if user is already responsible for an organization: %w", err)
@@ -155,17 +154,17 @@ func (p *PostgresRepository) AssignEmployeeToOrganization(orgResp *domain.Organi
 		return nil, fmt.Errorf("user is already responsible for another organization")
 	}
 
-	var assign domain.OrganizationResponsible
+	var assign openapi.OrganizationResponsible
 	err = p.db.QueryRow(`
         INSERT INTO organization_responsible (organization_id, user_id)
         VALUES ($1, $2)
         RETURNING id, organization_id, user_id`,
-		orgResp.OrganizationID,
-		orgResp.UserID,
+		orgResp.OrganizationId,
+		orgResp.UserId,
 	).Scan(
-		&assign.ID,
-		&assign.OrganizationID,
-		&assign.UserID,
+		&assign.Id,
+		&assign.OrganizationId,
+		&assign.UserId,
 	)
 
 	if err != nil {
@@ -664,7 +663,7 @@ func (p *PostgresRepository) CreateBid(bid *openapi.Bid) (*openapi.Bid, error) {
 func (p *PostgresRepository) EditBid(bid *openapi.Bid) (*openapi.Bid, error) {
 	_, err := p.db.Exec(`
 		INSERT INTO bid_version (id, bid_id, name, description, status, tender_id, author_type, author_id, version, created_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW())`,
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
 		uuid.New(), bid.Id, bid.Name, bid.Description, bid.Status, bid.TenderId, bid.AuthorType, bid.AuthorId, bid.Version, bid.CreatedAt,
 	)
 	if err != nil {

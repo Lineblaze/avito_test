@@ -4,7 +4,6 @@ import (
 	"fmt"
 	openapi "github.com/Lineblaze/avito_gen"
 	repository "zadanie-6105/backend/internal"
-	"zadanie-6105/backend/internal/domain"
 )
 
 //go:generate ifacemaker -f *.go -o ../usecase.go -i UseCase -s UseCase -p internal -y "Controller describes methods, implemented by the usecase package."
@@ -18,7 +17,7 @@ func NewUseCase(repo repository.Repository) *UseCase {
 
 // Employees
 
-func (u *UseCase) GetEmployeeByID(employeeID int64) (*domain.Employee, error) {
+func (u *UseCase) GetEmployeeByID(employeeID int64) (*openapi.Employee, error) {
 	employee, err := u.repo.GetEmployeeByID(employeeID)
 	if err != nil {
 		return nil, fmt.Errorf("getting employee by ID: %w", err)
@@ -26,7 +25,7 @@ func (u *UseCase) GetEmployeeByID(employeeID int64) (*domain.Employee, error) {
 	return employee, nil
 }
 
-func (u *UseCase) GetEmployeeByUserName(username string) (*domain.Employee, error) {
+func (u *UseCase) GetEmployeeByUserName(username string) (*openapi.Employee, error) {
 	employee, err := u.repo.GetEmployeeByUsername(username)
 	if err != nil {
 		return nil, fmt.Errorf("getting employee by username: %w", err)
@@ -34,11 +33,11 @@ func (u *UseCase) GetEmployeeByUserName(username string) (*domain.Employee, erro
 	return employee, nil
 }
 
-func (u *UseCase) CreateEmployee(req *domain.CreateEmployeeRequest) (*domain.Employee, error) {
-	employeeInfo := domain.Employee{
+func (u *UseCase) CreateEmployee(req *openapi.CreateEmployeeRequest) (*openapi.Employee, error) {
+	employeeInfo := openapi.Employee{
 		Username:  req.Username,
-		FirstName: req.FirstName,
-		LastName:  req.LastName,
+		Firstname: req.Firstname,
+		Lastname:  req.Lastname,
 	}
 
 	createdEmployee, err := u.repo.CreateEmployee(&employeeInfo)
@@ -51,7 +50,7 @@ func (u *UseCase) CreateEmployee(req *domain.CreateEmployeeRequest) (*domain.Emp
 
 // Organizations
 
-func (u *UseCase) GetOrganizationByID(organizationID int64) (*domain.Organization, error) {
+func (u *UseCase) GetOrganizationByID(organizationID int64) (*openapi.Organization, error) {
 	organization, err := u.repo.GetOrganizationByID(organizationID)
 	if err != nil {
 		return nil, fmt.Errorf("getting organization by ID: %w", err)
@@ -59,8 +58,8 @@ func (u *UseCase) GetOrganizationByID(organizationID int64) (*domain.Organizatio
 	return organization, nil
 }
 
-func (u *UseCase) CreateOrganization(req *domain.CreateOrganizationRequest) (*domain.Organization, error) {
-	organizationInfo := domain.Organization{
+func (u *UseCase) CreateOrganization(req *openapi.CreateOrganizationRequest) (*openapi.Organization, error) {
+	organizationInfo := openapi.Organization{
 		Name:        req.Name,
 		Description: req.Description,
 		Type:        req.Type,
@@ -74,10 +73,10 @@ func (u *UseCase) CreateOrganization(req *domain.CreateOrganizationRequest) (*do
 	return createdOrganization, nil
 }
 
-func (u *UseCase) AssignEmployeeToOrganization(req *domain.AssignEmployeeToOrganizationRequest) (*domain.OrganizationResponsible, error) {
-	orgRespInfo := domain.OrganizationResponsible{
-		OrganizationID: req.OrganizationID,
-		UserID:         req.UserID,
+func (u *UseCase) AssignEmployeeToOrganization(req *openapi.AssignEmployeeToOrganizationRequest) (*openapi.OrganizationResponsible, error) {
+	orgRespInfo := openapi.OrganizationResponsible{
+		OrganizationId: req.OrganizationId,
+		UserId:         req.UserId,
 	}
 	assign, err := u.repo.AssignEmployeeToOrganization(&orgRespInfo)
 	if err != nil {

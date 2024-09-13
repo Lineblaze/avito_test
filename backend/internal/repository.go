@@ -3,19 +3,17 @@
 package internal
 
 import (
-	"zadanie-6105/backend/internal/domain"
-
 	openapi "github.com/Lineblaze/avito_gen"
 )
 
 // Controller describes methods, implemented by the repository package.
 type Repository interface {
-	GetEmployeeByID(id int64) (*domain.Employee, error)
-	GetEmployeeByUsername(username string) (*domain.Employee, error)
-	CreateEmployee(employee *domain.Employee) (*domain.Employee, error)
-	GetOrganizationByID(id int64) (*domain.Organization, error)
-	CreateOrganization(organization *domain.Organization) (*domain.Organization, error)
-	AssignEmployeeToOrganization(orgResp *domain.OrganizationResponsible) (*domain.OrganizationResponsible, error)
+	GetEmployeeByID(id int64) (*openapi.Employee, error)
+	GetEmployeeByUsername(username string) (*openapi.Employee, error)
+	CreateEmployee(employee *openapi.Employee) (*openapi.Employee, error)
+	GetOrganizationByID(id int64) (*openapi.Organization, error)
+	CreateOrganization(organization *openapi.Organization) (*openapi.Organization, error)
+	AssignEmployeeToOrganization(orgResp *openapi.OrganizationResponsible) (*openapi.OrganizationResponsible, error)
 	IsUserResponsibleForOrganization(organizationId string) (bool, error)
 	IsUserResponsibleForOrganizationByUsername(username string) (bool, error)
 	GetResponsibleUsersForOrganization() ([]string, error)

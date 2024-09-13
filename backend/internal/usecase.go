@@ -3,19 +3,17 @@
 package internal
 
 import (
-	"zadanie-6105/backend/internal/domain"
-
 	openapi "github.com/Lineblaze/avito_gen"
 )
 
 // Controller describes methods, implemented by the usecase package.
 type UseCase interface {
-	GetEmployeeByID(employeeID int64) (*domain.Employee, error)
-	GetEmployeeByUserName(username string) (*domain.Employee, error)
-	CreateEmployee(req *domain.CreateEmployeeRequest) (*domain.Employee, error)
-	GetOrganizationByID(organizationID int64) (*domain.Organization, error)
-	CreateOrganization(req *domain.CreateOrganizationRequest) (*domain.Organization, error)
-	AssignEmployeeToOrganization(req *domain.AssignEmployeeToOrganizationRequest) (*domain.OrganizationResponsible, error)
+	GetEmployeeByID(employeeID int64) (*openapi.Employee, error)
+	GetEmployeeByUserName(username string) (*openapi.Employee, error)
+	CreateEmployee(req *openapi.CreateEmployeeRequest) (*openapi.Employee, error)
+	GetOrganizationByID(organizationID int64) (*openapi.Organization, error)
+	CreateOrganization(req *openapi.CreateOrganizationRequest) (*openapi.Organization, error)
+	AssignEmployeeToOrganization(req *openapi.AssignEmployeeToOrganizationRequest) (*openapi.OrganizationResponsible, error)
 	CheckUserOrganizationResponsibility(organizationId string) (bool, error)
 	CheckUserOrganizationResponsibilityByUsername(username string) (bool, error)
 	GetTenders() ([]openapi.Tender, error)

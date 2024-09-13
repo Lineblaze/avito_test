@@ -4,7 +4,6 @@ import (
 	openapi "github.com/Lineblaze/avito_gen"
 	"github.com/gofiber/fiber/v3"
 	useCase "zadanie-6105/backend/internal"
-	"zadanie-6105/backend/internal/domain"
 	"zadanie-6105/backend/pkg/logger"
 )
 
@@ -30,7 +29,7 @@ func (h Handler) Ping() fiber.Handler {
 
 func (h Handler) CreateEmployee() fiber.Handler {
 	return func(c fiber.Ctx) error {
-		var req domain.CreateEmployeeRequest
+		var req openapi.CreateEmployeeRequest
 		if err := c.Bind().Body(&req); err != nil {
 			h.logger.Errorf("Failed to parse request body", err)
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
@@ -50,7 +49,7 @@ func (h Handler) CreateEmployee() fiber.Handler {
 
 func (h Handler) CreateOrganization() fiber.Handler {
 	return func(c fiber.Ctx) error {
-		var req domain.CreateOrganizationRequest
+		var req openapi.CreateOrganizationRequest
 		if err := c.Bind().Body(&req); err != nil {
 			h.logger.Errorf("Failed to parse request body", err)
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
@@ -68,7 +67,7 @@ func (h Handler) CreateOrganization() fiber.Handler {
 
 func (h Handler) AssignEmployeeToOrganization() fiber.Handler {
 	return func(c fiber.Ctx) error {
-		var req domain.AssignEmployeeToOrganizationRequest
+		var req openapi.AssignEmployeeToOrganizationRequest
 
 		if err := c.Bind().Body(&req); err != nil {
 			h.logger.Errorf("Failed to parse request body: %v", err)
